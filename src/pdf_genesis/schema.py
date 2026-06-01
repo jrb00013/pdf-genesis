@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -14,6 +14,7 @@ class ChorusClaims(BaseModel):
 
 
 class ChorusExport(BaseModel):
+    report_type: Literal["chorus"] = "chorus"
     title: str = "CHORUS Physics Proof"
     generated_at: datetime | str = ""
     constants: dict[str, Any] = Field(default_factory=dict)
@@ -33,11 +34,40 @@ class SkidSizingExport(BaseModel):
 
 
 class Sgh1DesignExport(BaseModel):
+    report_type: Literal["design"] = "design"
     title: str = "CHORUS-SGH-1 Design Report"
     sizing: SkidSizingExport | dict[str, Any] = Field(default_factory=dict)
     claims: ChorusClaims = Field(default_factory=ChorusClaims)
     bom_path: str = ""
     blueprint_path: str = ""
+
+
+class PatentClaimItem(BaseModel):
+    number: int
+    text: str
+
+
+class PatentMemoExport(BaseModel):
+    report_type: Literal["patent"] = "patent"
+    title: str = "SGH-1 Patent Strategy Memo"
+    inventor: str = ""
+    claims_list: list[PatentClaimItem | str] = Field(default_factory=list)
+    prior_art: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
+class BenchRun(BaseModel):
+    label: str
+    timestamp: str = ""
+    metrics: dict[str, float | int | str] = Field(default_factory=dict)
+
+
+class BenchReportExport(BaseModel):
+    report_type: Literal["bench"] = "bench"
+    title: str = "SGH-1 Bench Test Report"
+    protocol: str = ""
+    runs: list[BenchRun] = Field(default_factory=list)
+    pass_fail: str = ""
 
 
 def load_export(path: str) -> ChorusExport | Sgh1DesignExport:
