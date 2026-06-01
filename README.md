@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml/badge.svg)](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml)
 
-Generate publication-style PDF reports from **[differential-harness](https://github.com/jrb00013/differential-harness)** exports — CHORUS physics proofs, SGH-1 hardware design, patent memos, and bench test summaries.
+Generate publication-style PDF reports from **local JSON exports** (e.g. from a private [differential-harness](https://github.com/jrb00013/differential-harness) checkout) — CHORUS physics proofs, SGH-1 hardware design, patent memos, and bench test summaries.
+
+This repo ships **sample JSON only**; it does not include proprietary experiment data, CAD, or filed patent claims.
 
 ## Features
 
