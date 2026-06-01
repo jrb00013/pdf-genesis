@@ -8,6 +8,7 @@ from pathlib import Path
 from pdf_genesis.builder import build_bench_pdf, build_design_pdf, build_pdf
 from pdf_genesis.config import ReportConfig, THEME_CHOICES
 from pdf_genesis.loaders import detect_report_type, load_any
+from pdf_genesis.repo import build_repo, load_manifest
 from pdf_genesis.schema import BenchReportExport, DesignExport, PhysicsExport
 
 
@@ -58,6 +59,24 @@ def cmd_batch(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_repo(args: argparse.Namespace) -> int:
+    repo = load_manifest(args.path.resolve())
+    mode = args.mode
+    if mode == "auto" and args.compile_only:
+        mode = "compile"
+    out = args.output
+    if out and mode == "compile":
+        out = out.resolve()
+    path = build_repo(
+        repo,
+        mode=mode,
+        output=out,
+        skip_pipeline=args.skip_pipeline,
+    )
+    print(f"Wrote {path} ({path.stat().st_size:,} bytes)")
+    return 0
+
+
 def cmd_themes(_: argparse.Namespace) -> int:
     from pdf_genesis.themes.base import THEMES
     from pdf_genesis.themes import dark, lab_white  # noqa: F401
@@ -77,7 +96,7 @@ def _default_output(data) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build styled PDF reports from local JSON exports"
+        description="Build styled PDF reports from JSON exports or entire research repos"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -102,6 +121,30 @@ def main() -> None:
     p_batch.add_argument("--no-cover", action="store_true")
     p_batch.add_argument("--no-toc", action="store_true")
     p_batch.set_defaults(func=cmd_batch)
+
+    p_repo = sub.add_parser(
+        "repo",
+        help="Build PDF from a repo (.pdf-genesis/manifest.json or auto-discover markdown)",
+    )
+    p_repo.add_argument("path", type=Path, help="Repository root")
+    p_repo.add_argument("-o", "--output", type=Path, default=None)
+    p_repo.add_argument(
+        "--mode",
+        choices=["auto", "full", "compile"],
+        default="auto",
+        help="auto=manifest builder if set else compile; full=pipeline+builder; compile=markdown only",
+    )
+    p_repo.add_argument(
+        "--compile-only",
+        action="store_true",
+        help="Shortcut for --mode compile",
+    )
+    p_repo.add_argument(
+        "--skip-pipeline",
+        action="store_true",
+        help="Skip manifest pipeline (use existing exports)",
+    )
+    p_repo.set_defaults(func=cmd_repo)
 
     sub.add_parser("themes", help="List available themes").set_defaults(func=cmd_themes)
 

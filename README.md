@@ -2,51 +2,53 @@
 
 [![CI](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml/badge.svg)](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml)
 
-**Generic** research PDF builder: turn **your local JSON exports** into styled reports (physics summary, hardware design, bench log).
+Research PDF toolkit:
 
-This repository contains **only placeholder sample JSON** — no proprietary IP, patent drafts, CAD, or experiment data.
+1. **Repo mode** — point at a project; compile markdown + exports, or run a manifest **pipeline + builder** for a deterministic full report.
+2. **JSON mode** — single-export PDFs (`physics`, `design`, `bench`).
 
-## Features
-
-- **Three report types**: `physics`, `design`, `bench`
-- **Themes**: `lab_white` (default), `dark`
-- **CLI**: `build`, `validate`, `batch`, `themes`
-- **MIT licensed**, pytest + GitHub Actions
+Public repo ships **generic samples only** — no proprietary IP.
 
 ## Install
 
 ```bash
-cd ~/projects/pdf-genesis
-python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## Quick start
+## Repository → PDF (primary use)
+
+```bash
+# Full paper (manifest runs pipeline + repo-local builder):
+pdf-genesis repo /path/to/your-research-repo
+
+# Markdown + figures + export summaries only:
+pdf-genesis repo /path/to/your-research-repo --mode compile -o out/compendium.pdf
+
+# Rebuild PDF without re-running simulation:
+pdf-genesis repo /path/to/your-research-repo --skip-pipeline
+```
+
+Add `.pdf-genesis/manifest.json` to your repo — see [docs/REPO.md](docs/REPO.md).
+
+## JSON export → PDF
 
 ```bash
 pdf-genesis build examples/physics_results.sample.json -o out/report.pdf
-pdf-genesis build examples/design_report.sample.json --theme dark
-pdf-genesis validate examples/bench_report.sample.json
 pdf-genesis batch examples/*.json -o out/
 ```
 
-## Report types
+## Report types (JSON)
 
-| `report_type` | Model | Typical JSON fields |
-|---------------|-------|---------------------|
-| `physics` | `PhysicsExport` | `results`, `constants`, `abstract`, `references` |
-| `design` | `DesignExport` | `sizing`, `cad_files`, `blueprint_path`, `bom_path` |
-| `bench` | `BenchReportExport` | `runs`, `protocol`, `pass_fail` |
-
-Legacy `report_type: "chorus"` is accepted and mapped to `physics`. **Patent / IP memos are not supported** in this public toolkit — keep those in a private repo.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/CLI.md](docs/CLI.md).
+| `report_type` | Model |
+|---------------|-------|
+| `physics` | `PhysicsExport` |
+| `design` | `DesignExport` |
+| `bench` | `BenchReportExport` |
 
 ## Development
 
 ```bash
 pytest
-pdf-genesis themes
 ```
 
 ## License

@@ -1,7 +1,7 @@
 [project]
 name = "pdf-genesis"
-version = "0.2.0"
-description = "Generic research PDF generator from local JSON exports (physics, design, bench)"
+version = "0.4.0"
+description = "Research PDF generator: JSON exports or full repo (markdown + manifest pipeline)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
