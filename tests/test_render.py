@@ -4,12 +4,7 @@ import pytest
 
 from pdf_genesis.config import ReportConfig
 from pdf_genesis.loaders import load_any
-from pdf_genesis.render import (
-    render_bench_pdf,
-    render_chorus_pdf,
-    render_design_pdf,
-    render_patent_pdf,
-)
+from pdf_genesis.render import render_bench_pdf, render_design_pdf, render_physics_pdf
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 OUT = Path(__file__).resolve().parent / "_out"
@@ -23,9 +18,8 @@ def _mkdir():
 @pytest.mark.parametrize(
     "name,renderer",
     [
-        ("chorus_results.sample.json", render_chorus_pdf),
-        ("sgh1_design.sample.json", render_design_pdf),
-        ("patent_memo.sample.json", render_patent_pdf),
+        ("physics_results.sample.json", render_physics_pdf),
+        ("design_report.sample.json", render_design_pdf),
         ("bench_report.sample.json", render_bench_pdf),
     ],
 )

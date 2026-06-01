@@ -5,16 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-ThemeName = Literal["lab_white", "chorus_dark"]
+# `chorus_dark` kept as deprecated alias for existing scripts
+ThemeName = Literal["lab_white", "dark", "chorus_dark"]
+THEME_CHOICES = ["lab_white", "dark", "chorus_dark"]
 
 
 class ReportConfig(BaseModel):
     title: str = "Research Report"
     author: str = "pdf-genesis"
-    organization: str = "CHORUS Research"
+    organization: str = ""
     theme: ThemeName = "lab_white"
     page_size: Literal["letter", "a4"] = "letter"
     include_cover: bool = True

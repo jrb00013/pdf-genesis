@@ -1,0 +1,21 @@
+{
+  "report_type": "design",
+  "title": "Sample Hardware Design",
+  "subtitle": "Illustrative sizing table",
+  "overview": "Generic assembly parameters for PDF layout testing only.",
+  "sizing": {
+    "P_target_W": 10.0,
+    "A_active_m2": 0.72,
+    "frame_L_mm": 1200,
+    "frame_W_mm": 800
+  },
+  "cad_files": ["part_a.step", "part_b.step", "assembly.step"],
+  "blueprint_path": "/path/to/your/blueprint.md",
+  "bom_path": "/path/to/your/bom.csv",
+  "notes": {
+    "safest": "Standard build",
+    "smartest": "Optimized variant",
+    "strangest": "Experimental add-on",
+    "civilization": "N/A"
+  }
+}

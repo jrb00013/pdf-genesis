@@ -28,7 +28,7 @@ def register(theme: ThemePalette) -> ThemePalette:
 
 
 def get_theme(name: str) -> ThemePalette:
-    from pdf_genesis.themes import chorus_dark, lab_white  # noqa: F401
+    from pdf_genesis.themes import dark, lab_white  # noqa: F401
 
     if name not in THEMES:
         raise KeyError(f"Unknown theme {name!r}; choose from {list(THEMES)}")

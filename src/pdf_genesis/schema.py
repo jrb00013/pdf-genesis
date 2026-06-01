@@ -6,23 +6,28 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-class ChorusClaims(BaseModel):
+class NarrativeNotes(BaseModel):
+    """Optional labeled bullets — content comes from your JSON only."""
+
     safest: str = ""
     smartest: str = ""
     strangest: str = ""
     civilization: str = ""
 
 
-class ChorusExport(BaseModel):
-    report_type: Literal["chorus"] = "chorus"
-    title: str = "CHORUS Physics Proof"
+class PhysicsExport(BaseModel):
+    report_type: Literal["physics"] = "physics"
+    title: str = "Physics Summary Report"
+    subtitle: str = ""
     generated_at: datetime | str = ""
+    abstract: str = ""
     constants: dict[str, Any] = Field(default_factory=dict)
     results: dict[str, float | int | str] = Field(default_factory=dict)
-    claims: ChorusClaims = Field(default_factory=ChorusClaims)
+    notes: NarrativeNotes = Field(default_factory=NarrativeNotes)
+    references: list[str] = Field(default_factory=list)
 
 
-class SkidSizingExport(BaseModel):
+class SizingExport(BaseModel):
     P_target_W: float = 0
     A_mem_m2: float = 0
     n_plates: int = 0
@@ -33,27 +38,16 @@ class SkidSizingExport(BaseModel):
     housing_od_mm: float = 0
 
 
-class Sgh1DesignExport(BaseModel):
+class DesignExport(BaseModel):
     report_type: Literal["design"] = "design"
-    title: str = "CHORUS-SGH-1 Design Report"
-    sizing: SkidSizingExport | dict[str, Any] = Field(default_factory=dict)
-    claims: ChorusClaims = Field(default_factory=ChorusClaims)
-    bom_path: str = ""
+    title: str = "Hardware Design Report"
+    subtitle: str = ""
+    overview: str = ""
+    sizing: SizingExport | dict[str, Any] = Field(default_factory=dict)
+    notes: NarrativeNotes = Field(default_factory=NarrativeNotes)
+    cad_files: list[str] = Field(default_factory=list)
     blueprint_path: str = ""
-
-
-class PatentClaimItem(BaseModel):
-    number: int
-    text: str
-
-
-class PatentMemoExport(BaseModel):
-    report_type: Literal["patent"] = "patent"
-    title: str = "SGH-1 Patent Strategy Memo"
-    inventor: str = ""
-    claims_list: list[PatentClaimItem | str] = Field(default_factory=list)
-    prior_art: list[str] = Field(default_factory=list)
-    notes: str = ""
+    bom_path: str = ""
 
 
 class BenchRun(BaseModel):
@@ -64,17 +58,41 @@ class BenchRun(BaseModel):
 
 class BenchReportExport(BaseModel):
     report_type: Literal["bench"] = "bench"
-    title: str = "SGH-1 Bench Test Report"
+    title: str = "Bench Test Report"
     protocol: str = ""
     runs: list[BenchRun] = Field(default_factory=list)
     pass_fail: str = ""
 
 
-def load_export(path: str) -> ChorusExport | Sgh1DesignExport:
+# Deprecated aliases (do not use in new exports)
+ChorusClaims = NarrativeNotes
+ChorusExport = PhysicsExport
+Sgh1DesignExport = DesignExport
+SkidSizingExport = SizingExport
+
+
+def load_export(path: str) -> PhysicsExport | DesignExport:
     import json
     from pathlib import Path
 
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    if "sizing" in data:
-        return Sgh1DesignExport.model_validate(data)
-    return ChorusExport.model_validate(data)
+    kind = data.get("report_type", "physics")
+    if kind in ("design", "hardware"):
+        return DesignExport.model_validate(_normalize_design(data))
+    return PhysicsExport.model_validate(_normalize_physics(data))
+
+
+def _normalize_physics(data: dict[str, Any]) -> dict[str, Any]:
+    out = dict(data)
+    if out.get("report_type") == "chorus":
+        out["report_type"] = "physics"
+    if "claims" in out and "notes" not in out:
+        out["notes"] = out.pop("claims")
+    return out
+
+
+def _normalize_design(data: dict[str, Any]) -> dict[str, Any]:
+    out = dict(data)
+    if "claims" in out and "notes" not in out:
+        out["notes"] = out.pop("claims")
+    return out

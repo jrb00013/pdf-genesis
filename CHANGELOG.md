@@ -5,7 +5,7 @@
 ### Added
 - Theme system (`lab_white`, `chorus_dark`) and `ReportConfig`
 - Reusable components: cover, tables, TOC, figures, page numbers
-- Renderers for CHORUS, SGH-1 design, patent memo, and bench reports
+- Renderers for physics, design, and bench reports (generic JSON only)
 - CLI subcommands: `validate`, `batch`, `themes`
 - Example JSON fixtures and pytest smoke tests
 - Documentation: ARCHITECTURE, CLI reference, CONTRIBUTING

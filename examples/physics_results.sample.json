@@ -1,0 +1,22 @@
+{
+  "report_type": "physics",
+  "title": "Sample Physics Summary",
+  "subtitle": "Illustrative export for pdf-genesis",
+  "generated_at": "2026-06-01T12:00:00+00:00",
+  "abstract": "Placeholder report built from generic sample JSON. Replace with your own local export.",
+  "constants": {"T_K": 298.15, "c_high": 100.0, "c_low": 10.0},
+  "results": {
+    "delta_pi_MPa": 2.45,
+    "power_W": 12.5,
+    "efficiency_pct": 42.0
+  },
+  "notes": {
+    "safest": "Conservative operating point",
+    "smartest": "Balanced tradeoff",
+    "strangest": "High-risk exploratory mode",
+    "civilization": "Fleet-scale extrapolation (not validated)"
+  },
+  "references": [
+    "Example: Author et al., Journal (year) — replace with your citations"
+  ]
+}

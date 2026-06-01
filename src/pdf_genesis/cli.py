@@ -5,20 +5,10 @@ import json
 import sys
 from pathlib import Path
 
-from pdf_genesis.builder import (
-    build_bench_pdf,
-    build_design_pdf,
-    build_patent_pdf,
-    build_pdf,
-)
-from pdf_genesis.config import ReportConfig
+from pdf_genesis.builder import build_bench_pdf, build_design_pdf, build_pdf
+from pdf_genesis.config import ReportConfig, THEME_CHOICES
 from pdf_genesis.loaders import detect_report_type, load_any
-from pdf_genesis.schema import (
-    BenchReportExport,
-    ChorusExport,
-    PatentMemoExport,
-    Sgh1DesignExport,
-)
+from pdf_genesis.schema import BenchReportExport, DesignExport, PhysicsExport
 
 
 def cmd_build(args: argparse.Namespace) -> int:
@@ -31,10 +21,8 @@ def cmd_build(args: argparse.Namespace) -> int:
         footer_text=args.footer or ReportConfig().footer_text,
     )
     out = args.output or _default_output(data)
-    if isinstance(data, Sgh1DesignExport):
+    if isinstance(data, DesignExport):
         path = build_design_pdf(data, out, config)
-    elif isinstance(data, PatentMemoExport):
-        path = build_patent_pdf(data, out, config)
     elif isinstance(data, BenchReportExport):
         path = build_bench_pdf(data, out, config)
     else:
@@ -54,7 +42,6 @@ def cmd_batch(args: argparse.Namespace) -> int:
     for path in sorted(args.inputs):
         out_dir = args.output_dir
         out_dir.mkdir(parents=True, exist_ok=True)
-        kind = detect_report_type(json.loads(path.read_text()))
         out = out_dir / f"{path.stem}.pdf"
         ns = argparse.Namespace(
             input=path,
@@ -73,26 +60,24 @@ def cmd_batch(args: argparse.Namespace) -> int:
 
 def cmd_themes(_: argparse.Namespace) -> int:
     from pdf_genesis.themes.base import THEMES
-    from pdf_genesis.themes import chorus_dark, lab_white  # noqa: F401
+    from pdf_genesis.themes import dark, lab_white  # noqa: F401
 
-    for name in THEMES:
+    for name in sorted(THEMES):
         print(name)
     return 0
 
 
 def _default_output(data) -> Path:
-    if isinstance(data, Sgh1DesignExport):
-        return Path("SGH1_Design_Report.pdf")
-    if isinstance(data, PatentMemoExport):
-        return Path("SGH1_Patent_Memo.pdf")
+    if isinstance(data, DesignExport):
+        return Path("design_report.pdf")
     if isinstance(data, BenchReportExport):
-        return Path("SGH1_Bench_Report.pdf")
-    return Path("CHORUS_report.pdf")
+        return Path("bench_report.pdf")
+    return Path("physics_report.pdf")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Research PDF generator for differential-harness exports"
+        description="Build styled PDF reports from local JSON exports"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -100,7 +85,7 @@ def main() -> None:
     p_build.add_argument("input", type=Path)
     p_build.add_argument("-o", "--output", type=Path, default=None)
     p_build.add_argument("--title", type=str, default=None)
-    p_build.add_argument("--theme", choices=["lab_white", "chorus_dark"], default="lab_white")
+    p_build.add_argument("--theme", choices=THEME_CHOICES, default="lab_white")
     p_build.add_argument("--no-cover", action="store_true")
     p_build.add_argument("--no-toc", action="store_true")
     p_build.add_argument("--footer", type=str, default=None)
@@ -113,7 +98,7 @@ def main() -> None:
     p_batch = sub.add_parser("batch", help="Build PDFs for multiple JSON files")
     p_batch.add_argument("inputs", type=Path, nargs="+")
     p_batch.add_argument("-o", "--output-dir", type=Path, default=Path("out"))
-    p_batch.add_argument("--theme", choices=["lab_white", "chorus_dark"], default="lab_white")
+    p_batch.add_argument("--theme", choices=THEME_CHOICES, default="lab_white")
     p_batch.add_argument("--no-cover", action="store_true")
     p_batch.add_argument("--no-toc", action="store_true")
     p_batch.set_defaults(func=cmd_batch)

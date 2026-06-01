@@ -1,31 +1,16 @@
-# CLI reference
-
-## `pdf-genesis build`
+# CLI
 
 ```bash
-pdf-genesis build examples/chorus_results.sample.json -o out/CHORUS.pdf
-pdf-genesis build exports/sgh1_design.json --theme chorus_dark --no-toc
+pdf-genesis build examples/physics_results.sample.json -o out/report.pdf
+pdf-genesis build my_export.json --theme dark --no-toc
+pdf-genesis validate my_export.json
+pdf-genesis batch examples/*.json -o out/
+pdf-genesis themes
 ```
 
 | Flag | Description |
 |------|-------------|
-| `-o`, `--output` | Output PDF path |
-| `--title` | Override document title |
-| `--theme` | `lab_white` (default) or `chorus_dark` |
+| `--theme` | `lab_white` (default), `dark`, or deprecated `chorus_dark` |
 | `--no-cover` | Skip cover page |
 | `--no-toc` | Skip table of contents |
 | `--footer` | Custom footer string |
-
-## `pdf-genesis validate`
-
-Checks JSON against the correct Pydantic schema without generating a PDF.
-
-## `pdf-genesis batch`
-
-```bash
-pdf-genesis batch examples/*.json -o out/
-```
-
-## `pdf-genesis themes`
-
-Lists registered theme names.

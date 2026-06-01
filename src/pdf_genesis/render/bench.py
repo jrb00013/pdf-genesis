@@ -17,7 +17,7 @@ def render_bench_pdf(
     output: Path,
     config: ReportConfig | None = None,
 ) -> Path:
-    config = config or ReportConfig(title=data.title, footer_text="Bench data — SGH-1 test cell")
+    config = config or ReportConfig(title=data.title)
     theme = resolve_theme(config)
     styles = body_styles(theme)
     doc = make_doc(output, config)
@@ -27,7 +27,7 @@ def render_bench_pdf(
         story.extend(
             build_cover_flowables(
                 data.title,
-                data.protocol or "SGH-1 bench protocol",
+                data.protocol or "Bench protocol",
                 config,
                 theme,
                 meta_lines=[("Result", data.pass_fail or "—")],

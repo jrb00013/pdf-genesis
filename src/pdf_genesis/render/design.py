@@ -10,26 +10,11 @@ from pdf_genesis.components.table import data_table
 from pdf_genesis.components.toc import toc_flowables
 from pdf_genesis.config import ReportConfig
 from pdf_genesis.render.base import body_styles, make_doc, on_page, resolve_theme
-from pdf_genesis.schema import Sgh1DesignExport
-
-
-CAD_PARTS = [
-    "sgh1_assembly.scad",
-    "sgh1_membrane_housing.scad",
-    "sgh1_manifold_feed.scad",
-    "sgh1_manifold_draw.scad",
-    "sgh1_skid_frame.scad",
-    "chorus_skid_enclosure.scad",
-    "chorus_aeh_panel.scad",
-    "sgh1_membrane_plate.scad",
-    "sgh1_end_cap.scad",
-    "sgh1_pump_mount.scad",
-    "sgh1_sensor_bracket.scad",
-]
+from pdf_genesis.schema import DesignExport
 
 
 def render_design_pdf(
-    data: Sgh1DesignExport,
+    data: DesignExport,
     output: Path,
     config: ReportConfig | None = None,
 ) -> Path:
@@ -40,13 +25,13 @@ def render_design_pdf(
     styles = body_styles(theme)
     doc = make_doc(output, config)
     story: list = []
-    sections = ["Overview", "Skid sizing", "CAD components", "Build references", "Ranked concepts"]
+    sections = ["Overview", "Sizing", "CAD index", "Paths", "Notes"]
 
     if config.include_cover:
         story.extend(
             build_cover_flowables(
                 data.title,
-                "CHORUS-Skid SGH-1 — PRO core + AEH acoustic module",
+                data.subtitle or "Hardware / assembly summary",
                 config,
                 theme,
             )
@@ -58,37 +43,35 @@ def render_design_pdf(
     story.append(Paragraph("Overview", styles["h2"]))
     story.append(
         Paragraph(
-            "Hardware design report for CHORUS-Skid SGH-1 (PRO salinity-gradient core) "
-            "with optional AEH ultrasonic membrane enhancement. "
-            "CAD sources live in <i>differential-harness/hardware/openscad/</i>.",
+            data.overview or "Design parameters and file references from the export JSON.",
             styles["body"],
         )
     )
 
-    story.append(Paragraph("Skid sizing", styles["h2"]))
+    story.append(Paragraph("Sizing", styles["h2"]))
     sz = data.sizing if isinstance(data.sizing, dict) else data.sizing.model_dump()
     rows = [["Parameter", "Value"]] + [[k, str(v)] for k, v in sorted(sz.items())]
     story.append(data_table(rows, theme, col_widths=[3 * inch, 3 * inch]))
 
-    story.append(Paragraph("CAD components", styles["h2"]))
-    for p in CAD_PARTS:
-        story.append(Paragraph(f"• {p}", styles["body"]))
+    if data.cad_files:
+        story.append(Paragraph("CAD index", styles["h2"]))
+        for p in data.cad_files:
+            story.append(Paragraph(f"• {p}", styles["body"]))
 
-    story.append(Paragraph("Build references", styles["h2"]))
-    bp = data.blueprint_path or "differential-harness/hardware/BUILD_BLUEPRINT.md"
-    bom = data.bom_path or "differential-harness/hardware/bom/SGH1_BOM.csv"
-    story.append(Paragraph(f"<b>Blueprint:</b> {bp}", styles["body"]))
-    story.append(Paragraph(f"<b>BOM:</b> {bom}", styles["body"]))
+    if data.blueprint_path or data.bom_path:
+        story.append(Paragraph("Paths", styles["h2"]))
+        if data.blueprint_path:
+            story.append(Paragraph(f"<b>Blueprint:</b> {data.blueprint_path}", styles["body"]))
+        if data.bom_path:
+            story.append(Paragraph(f"<b>BOM:</b> {data.bom_path}", styles["body"]))
 
-    story.append(Paragraph("Ranked concepts", styles["h2"]))
-    c = data.claims
-    for label, text in [
-        ("Safest", c.safest),
-        ("Smartest", c.smartest),
-        ("Strangest", c.strangest),
-        ("Civilization", c.civilization),
-    ]:
-        story.append(Paragraph(f"<b>{label}:</b> {text}", styles["body"]))
+    n = data.notes
+    note_pairs = [("Note A", n.safest), ("Note B", n.smartest), ("Note C", n.strangest), ("Note D", n.civilization)]
+    if any(t for _, t in note_pairs):
+        story.append(Paragraph("Notes", styles["h2"]))
+        for label, text in note_pairs:
+            if text:
+                story.append(Paragraph(f"<b>{label}:</b> {text}", styles["body"]))
 
     doc.build(story, onFirstPage=on_page(config), onLaterPages=on_page(config))
     return output.expanduser().resolve()

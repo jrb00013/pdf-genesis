@@ -20,4 +20,4 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q
       - run: pdf-genesis themes
-      - run: pdf-genesis build examples/chorus_results.sample.json -o /tmp/chorus.pdf
+      - run: pdf-genesis build examples/physics_results.sample.json -o /tmp/physics.pdf

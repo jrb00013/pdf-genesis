@@ -2,17 +2,16 @@
 
 [![CI](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml/badge.svg)](https://github.com/jrb00013/pdf-genesis/actions/workflows/ci.yml)
 
-Generate publication-style PDF reports from **local JSON exports** (e.g. from a private [differential-harness](https://github.com/jrb00013/differential-harness) checkout) — CHORUS physics proofs, SGH-1 hardware design, patent memos, and bench test summaries.
+**Generic** research PDF builder: turn **your local JSON exports** into styled reports (physics summary, hardware design, bench log).
 
-This repo ships **sample JSON only**; it does not include proprietary experiment data, CAD, or filed patent claims.
+This repository contains **only placeholder sample JSON** — no proprietary IP, patent drafts, CAD, or experiment data.
 
 ## Features
 
-- **Four report types**: CHORUS physics, SGH-1 design, patent strategy memo, bench test log
-- **Themes**: `lab_white` (default) and `chorus_dark`
-- **Components**: cover page, TOC, styled tables, page numbers
+- **Three report types**: `physics`, `design`, `bench`
+- **Themes**: `lab_white` (default), `dark`
 - **CLI**: `build`, `validate`, `batch`, `themes`
-- **MIT licensed**, pytest smoke tests, GitHub Actions CI
+- **MIT licensed**, pytest + GitHub Actions
 
 ## Install
 
@@ -25,27 +24,21 @@ pip install -e ".[dev]"
 ## Quick start
 
 ```bash
-# From differential-harness notebook export:
-pdf-genesis build ../differential-harness/exports/chorus_results.json -o CHORUS_report.pdf
-
-# Design report with dark theme:
-pdf-genesis build ../differential-harness/exports/sgh1_design.json --theme chorus_dark
-
-# Validate JSON only:
-pdf-genesis validate examples/chorus_results.sample.json
-
-# Batch build all samples:
+pdf-genesis build examples/physics_results.sample.json -o out/report.pdf
+pdf-genesis build examples/design_report.sample.json --theme dark
+pdf-genesis validate examples/bench_report.sample.json
 pdf-genesis batch examples/*.json -o out/
 ```
 
 ## Report types
 
-| JSON signal | Model | Output |
-|-------------|-------|--------|
-| `results` + `constants` | `ChorusExport` | Physics proof |
-| `sizing` | `Sgh1DesignExport` | Hardware design |
-| `claims_list` | `PatentMemoExport` | Patent memo |
-| `runs` | `BenchReportExport` | Bench log |
+| `report_type` | Model | Typical JSON fields |
+|---------------|-------|---------------------|
+| `physics` | `PhysicsExport` | `results`, `constants`, `abstract`, `references` |
+| `design` | `DesignExport` | `sizing`, `cad_files`, `blueprint_path`, `bom_path` |
+| `bench` | `BenchReportExport` | `runs`, `protocol`, `pass_fail` |
+
+Legacy `report_type: "chorus"` is accepted and mapped to `physics`. **Patent / IP memos are not supported** in this public toolkit — keep those in a private repo.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/CLI.md](docs/CLI.md).
 
