@@ -1,0 +1,16 @@
+{
+  "title": "CHORUS Physics Proof (sample)",
+  "generated_at": "2026-06-01T12:00:00+00:00",
+  "constants": {"T_K": 298.15, "C_sea": 600.0, "C_river": 20.0},
+  "results": {
+    "E_N_mV": 87.39,
+    "P_blue_W_m2": 15.0,
+    "column_MW_median": 22.76
+  },
+  "claims": {
+    "safest": "Blue energy (RED) at estuaries",
+    "smartest": "PV + hydrovoltaic evaporative coupling",
+    "strangest": "Telluric Storm Coupling conductance network",
+    "civilization": "Full CHORUS column on coastal km²"
+  }
+}

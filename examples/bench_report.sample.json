@@ -1,0 +1,18 @@
+{
+  "report_type": "bench",
+  "title": "SGH-1 Bench Test (sample)",
+  "protocol": "SGH1_TEST_PROTOCOL.md — open-circuit voltage sweep",
+  "pass_fail": "PASS (simulated)",
+  "runs": [
+    {
+      "label": "OCV baseline",
+      "timestamp": "2026-06-01T10:00:00Z",
+      "metrics": {"V_oc_mV": 42.5, "I_sc_uA": 120, "R_int_ohm": 0.35}
+    },
+    {
+      "label": "PRO draw @ 5 bar",
+      "timestamp": "2026-06-01T10:30:00Z",
+      "metrics": {"P_elec_mW": 8.2, "delta_P_bar": 34.5}
+    }
+  ]
+}
