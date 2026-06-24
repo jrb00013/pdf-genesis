@@ -4,10 +4,11 @@
 
 Research PDF toolkit:
 
-1. **Repo mode** — point at a project; compile markdown + exports, or run a manifest **pipeline + builder** for a deterministic full report.
-2. **JSON mode** — single-export PDFs (`physics`, `design`, `bench`).
+1. **Research mode** (default) — synthesize a structured paper from repo metadata, theory docs, experiments, and benchmarks.
+2. **Repo compile mode** — stitch markdown + exports into a compendium.
+3. **JSON mode** — single-export PDFs (`physics`, `design`, `bench`).
 
-Public repo ships **generic samples only** — no proprietary IP.
+LaTeX equations in markdown (`$...$`, `$$...$$`) render via matplotlib mathtext.
 
 ## Install
 
@@ -18,17 +19,17 @@ pip install -e ".[dev]"
 ## Repository → PDF (primary use)
 
 ```bash
-# Full paper (manifest runs pipeline + repo-local builder):
+# Synthesized research paper (default):
 pdf-genesis repo /path/to/your-research-repo
 
-# Markdown + figures + export summaries only:
-pdf-genesis repo /path/to/your-research-repo --mode compile -o out/compendium.pdf
+# Markdown compendium only:
+pdf-genesis repo /path/to/your-research-repo --mode compile
 
-# Rebuild PDF without re-running simulation:
-pdf-genesis repo /path/to/your-research-repo --skip-pipeline
+# Skip live benchmark run (use cached exports):
+pdf-genesis repo /path/to/your-repo --skip-benchmark
 ```
 
-Add `.pdf-genesis/manifest.json` to your repo — see [docs/REPO.md](docs/REPO.md).
+Add `.pdf-genesis/manifest.json` for title, author, and output path — see [docs/REPO.md](docs/REPO.md).
 
 ## JSON export → PDF
 

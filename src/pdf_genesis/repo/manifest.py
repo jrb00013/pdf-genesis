@@ -28,6 +28,7 @@ class RepoManifest:
     subtitle: str = ""
     author: str = ""
     organization: str = ""
+    paper_mode: str = "research"
     pipeline: str | None = None
     builder: str | None = None
     output: str | None = None
@@ -62,6 +63,7 @@ def load_manifest(repo_root: Path) -> RepoManifest:
             subtitle=data.get("subtitle", ""),
             author=data.get("author", ""),
             organization=data.get("organization", ""),
+            paper_mode=data.get("paper_mode", "research"),
             pipeline=data.get("pipeline"),
             builder=data.get("builder"),
             output=data.get("output"),

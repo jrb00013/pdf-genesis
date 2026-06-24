@@ -72,6 +72,7 @@ def cmd_repo(args: argparse.Namespace) -> int:
         mode=mode,
         output=out,
         skip_pipeline=args.skip_pipeline,
+        run_benchmark=not args.skip_benchmark,
     )
     print(f"Wrote {path} ({path.stat().st_size:,} bytes)")
     return 0
@@ -130,14 +131,19 @@ def main() -> None:
     p_repo.add_argument("-o", "--output", type=Path, default=None)
     p_repo.add_argument(
         "--mode",
-        choices=["auto", "full", "compile"],
+        choices=["auto", "full", "research", "compile"],
         default="auto",
-        help="auto=manifest builder if set else compile; full=pipeline+builder; compile=markdown only",
+        help="auto=manifest builder or research paper; research=synthesized paper; compile=markdown only",
     )
     p_repo.add_argument(
         "--compile-only",
         action="store_true",
         help="Shortcut for --mode compile",
+    )
+    p_repo.add_argument(
+        "--skip-benchmark",
+        action="store_true",
+        help="Skip running repo benchmark script during research synthesis",
     )
     p_repo.add_argument(
         "--skip-pipeline",
