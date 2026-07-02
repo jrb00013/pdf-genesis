@@ -25,11 +25,23 @@ _TABLE_SEP = re.compile(r"^\|?[\s:-]+\|[\s|:-]+\|?$")
 
 def _inline_md(text: str) -> str:
     text = html.escape(text.strip())
-    text = re.sub(r"`([^`]+)`", r"<font name='Courier' size='9' color='#2d3748'>\1</font>", text)
+
+    code_spans: list[str] = []
+
+    def _stash_code(m: re.Match) -> str:
+        code_spans.append(m.group(1))
+        return f"\x00CODE{len(code_spans) - 1}\x00"
+
+    text = re.sub(r"`([^`]+)`", _stash_code, text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", text)
     text = re.sub(r"_([^_]+)_", r"<i>\1</i>", text)
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<link href="\2" color="blue">\1</link>', text)
+    for i, code in enumerate(code_spans):
+        text = text.replace(
+            f"\x00CODE{i}\x00",
+            f"<font name='Courier' size='9' color='#2d3748'>{code}</font>",
+        )
     return inline_math_to_markup(text)
 
 
