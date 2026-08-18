@@ -4,6 +4,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import Table, TableStyle
 
+from pdf_genesis import fonts
 from pdf_genesis.themes.base import ThemePalette
 
 
@@ -12,13 +13,15 @@ def data_table(
     theme: ThemePalette,
     col_widths: list[float] | None = None,
 ) -> Table:
+    fonts.ensure_fonts_registered()
     if col_widths is None:
         col_widths = [3.2 * inch, 2.8 * inch]
     table = Table(rows, colWidths=col_widths, repeatRows=1)
     style = [
         ("BACKGROUND", (0, 0), (-1, 0), theme.table_header_bg),
         ("TEXTCOLOR", (0, 0), (-1, 0), theme.table_header_fg),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, 0), fonts.FONT_SANS_BOLD),
+        ("FONTNAME", (0, 1), (-1, -1), fonts.FONT_SERIF),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, theme.table_row_alt]),

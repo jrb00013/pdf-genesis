@@ -5,6 +5,7 @@ from pathlib import Path
 from reportlab.lib.units import inch
 from reportlab.platypus import Image, Paragraph, Spacer
 
+from pdf_genesis import fonts
 from pdf_genesis.themes.base import ThemePalette
 
 
@@ -17,8 +18,12 @@ def figure_flowable(
 ) -> list:
     from reportlab.lib.styles import ParagraphStyle
 
+    fonts.ensure_fonts_registered()
+
     if not path.exists():
-        cap = ParagraphStyle("Cap", fontSize=9, textColor=theme.muted)
+        cap = ParagraphStyle(
+            "Cap", fontName=fonts.FONT_SERIF_ITALIC, fontSize=9, textColor=theme.muted
+        )
         return [Paragraph(f"<i>[Missing figure: {path.name}]</i>", cap)]
 
     img = Image(str(path))
@@ -26,5 +31,12 @@ def figure_flowable(
     scale = min(max_width / iw, max_height / ih, 1.0)
     img.drawWidth = iw * scale
     img.drawHeight = ih * scale
-    cap_style = ParagraphStyle("FigCap", fontSize=9, textColor=theme.muted, alignment=1)
-    return [img, Spacer(1, 0.08 * inch), Paragraph(caption, cap_style), Spacer(1, 0.15 * inch)]
+    cap_style = ParagraphStyle(
+        "FigCap",
+        fontName=fonts.FONT_SERIF_ITALIC,
+        fontSize=9,
+        textColor=theme.muted,
+        alignment=1,
+        spaceBefore=2,
+    )
+    return [img, Spacer(1, 0.1 * inch), Paragraph(caption, cap_style), Spacer(1, 0.18 * inch)]
