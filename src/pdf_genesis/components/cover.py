@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from reportlab.lib.units import inch
-from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import HRFlowable, Paragraph, Spacer, Table, TableStyle
 
+from pdf_genesis import fonts
 from pdf_genesis.config import ReportConfig
 from pdf_genesis.themes.base import ThemePalette
 
@@ -14,10 +15,13 @@ def build_cover_flowables(
     theme: ThemePalette,
     meta_lines: list[tuple[str, str]] | None = None,
 ) -> list:
+    fonts.ensure_fonts_registered()
     styles = _cover_styles(theme)
     story: list = [Spacer(1, 1.2 * inch)]
     story.append(Paragraph(title, styles["title"]))
-    story.append(Spacer(1, 0.15 * inch))
+    story.append(
+        HRFlowable(width="30%", thickness=1.2, color=theme.primary, spaceBefore=6, spaceAfter=14)
+    )
     story.append(Paragraph(subtitle, styles["subtitle"]))
     story.append(Spacer(1, 0.4 * inch))
     story.append(Paragraph(config.organization, styles["org"]))
@@ -44,11 +48,25 @@ def _cover_styles(theme: ThemePalette) -> dict:
 
     return {
         "title": ParagraphStyle(
-            "CoverTitle", fontSize=26, leading=30, textColor=theme.primary, spaceAfter=8
+            "CoverTitle",
+            fontName=fonts.FONT_SANS_BOLD,
+            fontSize=26,
+            leading=30,
+            textColor=theme.primary,
+            spaceAfter=8,
         ),
         "subtitle": ParagraphStyle(
-            "CoverSub", fontSize=14, leading=18, textColor=theme.secondary, spaceAfter=12
+            "CoverSub",
+            fontName=fonts.FONT_SANS,
+            fontSize=14,
+            leading=18,
+            textColor=theme.secondary,
+            spaceAfter=12,
         ),
-        "org": ParagraphStyle("CoverOrg", fontSize=11, textColor=theme.text),
-        "muted": ParagraphStyle("CoverMuted", fontSize=9, textColor=theme.muted),
+        "org": ParagraphStyle(
+            "CoverOrg", fontName=fonts.FONT_SERIF, fontSize=11, textColor=theme.text
+        ),
+        "muted": ParagraphStyle(
+            "CoverMuted", fontName=fonts.FONT_SERIF_ITALIC, fontSize=9, textColor=theme.muted
+        ),
     }
