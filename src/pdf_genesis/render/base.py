@@ -6,7 +6,8 @@ from typing import Callable
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.platypus import SimpleDocTemplate
 
-from pdf_genesis.components.header_footer import page_number_canvas
+from pdf_genesis import fonts
+from pdf_genesis.components.header_footer import header_footer_canvas
 from pdf_genesis.config import ReportConfig
 from pdf_genesis.themes.base import ThemePalette, get_theme
 from pdf_genesis.utils.paths import ensure_parent
@@ -33,9 +34,11 @@ def make_doc(
 
 
 def on_page(config: ReportConfig) -> Callable:
+    theme = resolve_theme(config)
+
     def _canvas(canvas, doc):
         if config.include_page_numbers:
-            page_number_canvas(canvas, doc, config.footer_text)
+            header_footer_canvas(canvas, doc, config, theme)
 
     return _canvas
 
@@ -47,11 +50,13 @@ def resolve_theme(config: ReportConfig) -> ThemePalette:
 def body_styles(theme: ThemePalette) -> dict:
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
+    fonts.ensure_fonts_registered()
     base = getSampleStyleSheet()
     return {
         "title": ParagraphStyle(
             "DocTitle",
             parent=base["Title"],
+            fontName=fonts.FONT_SANS_BOLD,
             fontSize=22,
             leading=26,
             textColor=theme.primary,
@@ -60,6 +65,7 @@ def body_styles(theme: ThemePalette) -> dict:
         "h1": ParagraphStyle(
             "DocH1",
             parent=base["Heading1"],
+            fontName=fonts.FONT_SANS_BOLD,
             fontSize=16,
             leading=20,
             textColor=theme.primary,
@@ -69,6 +75,7 @@ def body_styles(theme: ThemePalette) -> dict:
         "h2": ParagraphStyle(
             "DocH2",
             parent=base["Heading2"],
+            fontName=fonts.FONT_SANS_BOLD,
             fontSize=13,
             leading=17,
             textColor=theme.secondary,
@@ -78,6 +85,7 @@ def body_styles(theme: ThemePalette) -> dict:
         "h3": ParagraphStyle(
             "DocH3",
             parent=base["Heading3"],
+            fontName=fonts.FONT_SANS_BOLD,
             fontSize=11,
             leading=14,
             textColor=theme.secondary,
@@ -87,8 +95,9 @@ def body_styles(theme: ThemePalette) -> dict:
         "body": ParagraphStyle(
             "DocBody",
             parent=base["BodyText"],
-            fontSize=10.5,
+            fontName=fonts.FONT_SERIF,
             textColor=theme.text,
+            fontSize=10.5,
             leading=15,
             spaceAfter=4,
         ),
@@ -97,7 +106,7 @@ def body_styles(theme: ThemePalette) -> dict:
             parent=base["Code"],
             fontSize=8.5,
             leading=11,
-            fontName="Courier",
+            fontName=fonts.FONT_MONO,
             backColor=theme.table_row_alt,
             leftIndent=8,
             rightIndent=8,
@@ -105,6 +114,7 @@ def body_styles(theme: ThemePalette) -> dict:
         "muted": ParagraphStyle(
             "DocMuted",
             parent=base["BodyText"],
+            fontName=fonts.FONT_SERIF_ITALIC,
             fontSize=9,
             textColor=theme.muted,
             leading=12,
