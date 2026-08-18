@@ -8,6 +8,7 @@ from reportlab.platypus import Image, PageBreak, Paragraph, Spacer
 
 from pdf_genesis.components.cover import build_cover_flowables
 from pdf_genesis.components.table import data_table
+from pdf_genesis.components.toc import toc_flowables
 from pdf_genesis.config import ReportConfig
 from pdf_genesis.repo.discover import collect_exports, collect_figures, collect_markdown
 from pdf_genesis.repo.manifest import RepoManifest
@@ -66,11 +67,15 @@ def compile_repo_pdf(
         story.append(PageBreak())
 
     md_files = collect_markdown(repo)
-    story.append(Paragraph("Document index", styles["h2"]))
-    for p in md_files:
-        rel = p.relative_to(repo.root)
-        story.append(Paragraph(f"• {rel}", styles["body"]))
-    story.append(PageBreak())
+    section_names = [str(p.relative_to(repo.root)) for p in md_files]
+    if config.include_toc and section_names:
+        story.extend(toc_flowables(section_names, theme))
+    else:
+        story.append(Paragraph("Document index", styles["h2"]))
+        for p in md_files:
+            rel = p.relative_to(repo.root)
+            story.append(Paragraph(f"• {rel}", styles["body"]))
+        story.append(PageBreak())
 
     for md in md_files:
         rel = md.relative_to(repo.root)
