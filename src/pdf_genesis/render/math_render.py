@@ -23,6 +23,11 @@ def _render_mathtext(latex: str, fontsize: float, dpi: int) -> tuple[bytes, floa
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    # "cm" (Computer Modern) gives equations the authentic LaTeX look,
+    # instead of matplotlib's default DejaVu Sans mathtext, and reads as
+    # much more "real academic paper" alongside the serif body text.
+    matplotlib.rcParams["mathtext.fontset"] = "cm"
+
     clean = latex.strip()
     if not clean:
         raise ValueError("empty equation")
