@@ -31,6 +31,7 @@ def _render_mathtext(latex: str, fontsize: float, dpi: int) -> tuple[bytes, floa
     # Computer Modern mathtext — closest to real LaTeX in a pure-Python stack.
     matplotlib.rcParams["mathtext.fontset"] = "cm"
     matplotlib.rcParams["mathtext.default"] = "it"
+    matplotlib.rcParams["figure.max_open_warning"] = 100
 
     clean = latex.strip()
     if not clean:
@@ -293,48 +294,36 @@ class MathAwareParagraph(Flowable):
 def render_inline_math_paragraph(text: str, style) -> list:
     """Render prose with CM math images (subscripts as math, not underscores).
 
-    Each HTML prose fragment stays a full Paragraph (safe wrapping). Math is a
-    matplotlib CM image between fragments. Short runs stay on one table row;
-    longer runs stack so mid-tag word splits never happen.
+    Returns a *flat, page-breakable* list of flowables so long abstracts cannot
+    create a Table cell taller than the frame.
     """
     import html as _html
-
-    from reportlab.platypus import KeepTogether, Table
 
     segments = re.split(r"§MATH§(.+?)§/MATH§", text)
     if len(segments) == 1:
         return [Paragraph(text, style)]
 
     props = _InlineMathProps()
-    row: list = []
+    out: list = []
     for idx, seg in enumerate(segments):
         if idx % 2 == 1:
             clean = _sanitize_mathtext(seg)
             try:
-                row.append(math_image(clean, display=False, fontsize=11))
+                out.append(math_image(clean, display=False, fontsize=11))
             except Exception:
-                row.append(
+                out.append(
                     Paragraph(
                         f"<font name='Courier' size='9'><i>{_html.escape(clean)}</i></font>",
                         style,
                     )
                 )
+            out.append(Spacer(1, 2))
             continue
         if not seg:
             continue
-        row.append(Paragraph(props.wrap(seg), style))
-
-    n_math = sum(1 for i, s in enumerate(segments) if i % 2 == 1 and s)
-    if n_math <= 2 and len(row) <= 5:
-        return [Table([row], hAlign="LEFT"), Spacer(1, 4)]
-
-    stacked: list = []
-    for item in row:
-        stacked.append(item)
-        stacked.append(Spacer(1, 2))
-    return [KeepTogether(stacked)]
-
-
+        out.append(Paragraph(props.wrap(seg), style))
+        out.append(Spacer(1, 2))
+    return out
 
 
 def _fallback_style():
