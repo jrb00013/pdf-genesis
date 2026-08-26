@@ -157,7 +157,7 @@ def render_display_equation(latex: str) -> list:
         ]
 
 
-class _InlineMathRow:
+class _InlineMathProps:
     """Track bold/italic carry across math-split prose fragments."""
 
     __slots__ = ("tags",)
@@ -290,31 +290,51 @@ class MathAwareParagraph(Flowable):
                 item.drawOn(self.canv, x, y + dy)
                 x += w + self.gap
             y -= 2
-
-
 def render_inline_math_paragraph(text: str, style) -> list:
-    """Render prose with true CM math images (subscripts as math, not underscores)."""
+    """Render prose with CM math images (subscripts as math, not underscores).
+
+    Each HTML prose fragment stays a full Paragraph (safe wrapping). Math is a
+    matplotlib CM image between fragments. Short runs stay on one table row;
+    longer runs stack so mid-tag word splits never happen.
+    """
     import html as _html
+
+    from reportlab.platypus import KeepTogether, Table
 
     segments = re.split(r"§MATH§(.+?)§/MATH§", text)
     if len(segments) == 1:
         return [Paragraph(text, style)]
 
-    props = _InlineMathRow()
-    pieces: list = []
+    props = _InlineMathProps()
+    row: list = []
     for idx, seg in enumerate(segments):
         if idx % 2 == 1:
             clean = _sanitize_mathtext(seg)
             try:
-                pieces.append(math_image(clean, display=False, fontsize=11))
+                row.append(math_image(clean, display=False, fontsize=11))
             except Exception:
-                pieces.append(Paragraph(f"<font name='Courier' size='9'><i>{_html.escape(clean)}</i></font>", style))
+                row.append(
+                    Paragraph(
+                        f"<font name='Courier' size='9'><i>{_html.escape(clean)}</i></font>",
+                        style,
+                    )
+                )
             continue
         if not seg:
             continue
-        pieces.append(props.wrap(seg))
+        row.append(Paragraph(props.wrap(seg), style))
 
-    return [MathAwareParagraph(pieces, style), Spacer(1, 4)]
+    n_math = sum(1 for i, s in enumerate(segments) if i % 2 == 1 and s)
+    if n_math <= 2 and len(row) <= 5:
+        return [Table([row], hAlign="LEFT"), Spacer(1, 4)]
+
+    stacked: list = []
+    for item in row:
+        stacked.append(item)
+        stacked.append(Spacer(1, 2))
+    return [KeepTogether(stacked)]
+
+
 
 
 def _fallback_style():
