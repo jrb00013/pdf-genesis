@@ -67,20 +67,61 @@ def compile_repo_pdf(
         story.append(PageBreak())
 
     md_files = collect_markdown(repo)
-    section_names = [str(p.relative_to(repo.root)) for p in md_files]
+
+    def _section_title(path: Path) -> str:
+        try:
+            for line in path.read_text(encoding="utf-8", errors="replace").splitlines()[:60]:
+                s = line.strip()
+                if s.startswith("# ") and not s.startswith("## "):
+                    return s[2:].strip().rstrip(":")
+                if s.startswith("## ") and not s.startswith("### "):
+                    # prefer first H2 only if no H1
+                    return s[3:].strip()
+        except OSError:
+            pass
+        return path.stem.replace("-", " ").replace("_", " ").title()
+
+    def _toc_entries(path: Path) -> list[str]:
+        """For a single manuscript, TOC = numbered H2 sections (not the filename)."""
+        entries: list[str] = []
+        try:
+            for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                s = line.strip()
+                if s.startswith("## ") and not s.startswith("### "):
+                    title = s[3:].strip()
+                    # skip subtitle-only H2s that are part of the title block
+                    if title.lower() in {"abstract", "keywords"}:
+                        continue
+                    if title.startswith("CRANKL —") or title.startswith("Deepiri"):
+                        continue
+                    entries.append(title)
+        except OSError:
+            pass
+        return entries or [_section_title(path)]
+
+    section_names: list[str] = []
+    if len(md_files) == 1:
+        section_names = _toc_entries(md_files[0])
+    else:
+        section_names = [_section_title(p) for p in md_files]
+
     if config.include_toc and section_names:
         story.extend(toc_flowables(section_names, theme))
     else:
         story.append(Paragraph("Document index", styles["h2"]))
-        for p in md_files:
-            rel = p.relative_to(repo.root)
-            story.append(Paragraph(f"• {rel}", styles["body"]))
+        for name in section_names:
+            story.append(Paragraph(f"• {name}", styles["body"]))
         story.append(PageBreak())
 
     for md in md_files:
-        rel = md.relative_to(repo.root)
+        skip = len(md_files) == 1 or md.name in {"source.md", "paper.md", "main.md"}
         story.extend(
-            markdown_to_flowables(md, theme, section_prefix=str(rel))
+            markdown_to_flowables(
+                md,
+                theme,
+                section_prefix=None if skip else _section_title(md),
+                skip_title=skip,
+            )
         )
         story.append(PageBreak())
 

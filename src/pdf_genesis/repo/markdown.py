@@ -11,7 +11,6 @@ from reportlab.platypus import Paragraph, Preformatted, Spacer, Table, TableStyl
 from pdf_genesis.render.base import body_styles
 from pdf_genesis.render.math_render import (
     extract_display_math_blocks,
-    inline_math_to_markup,
     render_display_equation,
     render_inline_math_paragraph,
 )
@@ -24,7 +23,29 @@ _TABLE_SEP = re.compile(r"^\|?[\s:-]+\|[\s|:-]+\|?$")
 
 
 def _inline_md(text: str) -> str:
-    text = html.escape(text.strip())
+    """Markdown inline → ReportLab markup.
+
+    Math ($...$ / \\(...\\)) is stashed *before* underscore italics so
+    subscripts like $H_C$ and $\\dim H^0$ render as math, not as ``H<i>C</i>``.
+    """
+    text = text.strip()
+
+    math_spans: list[str] = []
+
+    def _stash_math(m: re.Match) -> str:
+        body = m.group(1) or m.group(2) or ""
+        math_spans.append(body)
+        return f"\x00MATH{len(math_spans) - 1}\x00"
+
+    # Stash math first (raw, before html.escape) so '_' in latex is preserved.
+    text = re.sub(
+        r"(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)|\\\((.+?)\\\)",
+        _stash_math,
+        text,
+        flags=re.S,
+    )
+
+    text = html.escape(text)
 
     code_spans: list[str] = []
 
@@ -35,14 +56,17 @@ def _inline_md(text: str) -> str:
     text = re.sub(r"`([^`]+)`", _stash_code, text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", text)
-    text = re.sub(r"_([^_]+)_", r"<i>\1</i>", text)
+    # Do NOT treat '_' as italics — conflicts with snake_case and leftover latex.
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<link href="\2" color="blue">\1</link>', text)
     for i, code in enumerate(code_spans):
         text = text.replace(
             f"\x00CODE{i}\x00",
             f"<font name='Courier' size='9' color='#2d3748'>{code}</font>",
         )
-    return inline_math_to_markup(text)
+    # Restore math as §MATH§ markers for render_inline_math_paragraph
+    for i, body in enumerate(math_spans):
+        text = text.replace(f"\x00MATH{i}\x00", f"§MATH§{body}§/MATH§")
+    return text
 
 
 def _heading_style(level: int, styles: dict):
@@ -86,7 +110,9 @@ def markdown_to_flowables(
 
     lines = raw.splitlines()
     in_code = False
+    in_display_math = False
     code_buf: list[str] = []
+    math_buf: list[str] = []
     table_buf: list[list[str]] = []
     para_buf: list[str] = []
 
@@ -132,6 +158,21 @@ def markdown_to_flowables(
     for raw_line in lines:
         line = raw_line.rstrip()
 
+        # Multi-line $$ ... $$ display math
+        if in_display_math:
+            if "$$" in line.strip():
+                before, _, after = line.strip().partition("$$")
+                if before.strip():
+                    math_buf.append(before.strip())
+                story.extend(render_display_equation(" ".join(math_buf)))
+                math_buf = []
+                in_display_math = False
+                if after.strip():
+                    para_buf.append(after.strip())
+            else:
+                math_buf.append(line.strip())
+            continue
+
         if line.strip().startswith("```"):
             flush_para()
             flush_table()
@@ -144,6 +185,49 @@ def markdown_to_flowables(
 
         if in_code:
             code_buf.append(line)
+            continue
+
+        # Figure placeholders: ![Figure N. caption](figures/...)
+        fig_m = re.match(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$", line.strip())
+        if fig_m:
+            flush_para()
+            flush_table()
+            caption, rel = fig_m.group(1), fig_m.group(2)
+            fig_path = (md_path.parent / rel).resolve()
+            if fig_path.is_file():
+                try:
+                    from reportlab.platypus import Image as RLImage
+
+                    story.append(RLImage(str(fig_path), width=5.2 * inch, height=3.0 * inch))
+                except Exception:
+                    story.append(
+                        Paragraph(
+                            f"<i>[Figure asset failed to load: {html.escape(rel)}]</i>",
+                            styles["muted"],
+                        )
+                    )
+            else:
+                # Box placeholder so the paper still looks like a finished draft
+                box = Table(
+                    [[Paragraph(f"<b>FIGURE PLACEHOLDER</b><br/>{html.escape(caption or rel)}", styles["body"])]],
+                    colWidths=[5.5 * inch],
+                )
+                box.setStyle(
+                    TableStyle(
+                        [
+                            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#718096")),
+                            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#edf2f7")),
+                            ("TOPPADDING", (0, 0), (-1, -1), 28),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 28),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                        ]
+                    )
+                )
+                story.append(box)
+            if caption:
+                story.append(Paragraph(f"<b>{html.escape(caption)}</b>", styles["muted"]))
+            story.append(Spacer(1, 10))
             continue
 
         if line.strip().startswith("|") and "|" in line[1:]:
@@ -161,7 +245,10 @@ def markdown_to_flowables(
             level = len(hm.group(1))
             text = _inline_md(hm.group(2))
             style = _heading_style(level, styles)
-            story.append(Paragraph(text, style))
+            if "§MATH§" in text:
+                story.extend(render_inline_math_paragraph(text, style))
+            else:
+                story.append(Paragraph(text, style))
             story.append(Spacer(1, 6))
             continue
 
@@ -186,10 +273,19 @@ def markdown_to_flowables(
             story.append(Spacer(1, 12))
             continue
 
-        if line.strip().startswith("$$") and line.strip().endswith("$$") and line.count("$$") >= 2:
+        stripped = line.strip()
+        if stripped.startswith("$$") and stripped.endswith("$$") and stripped.count("$$") >= 2:
             flush_para()
-            latex = line.strip()[2:-2].strip()
+            latex = stripped[2:-2].strip()
             story.extend(render_display_equation(latex))
+            continue
+
+        if stripped.startswith("$$"):
+            flush_para()
+            rest = stripped[2:].strip()
+            if rest:
+                math_buf.append(rest)
+            in_display_math = True
             continue
 
         para_buf.append(line)
