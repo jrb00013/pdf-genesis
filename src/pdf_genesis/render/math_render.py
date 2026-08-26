@@ -300,7 +300,7 @@ def render_inline_math_paragraph(text: str, style) -> list:
     if len(segments) == 1:
         return [Paragraph(text, style)]
 
-    props = _InlineMathProp()
+    props = _InlineMathRow()
     pieces: list = []
     for idx, seg in enumerate(segments):
         if idx % 2 == 1:
